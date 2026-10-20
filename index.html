@@ -68,6 +68,11 @@
           <p class="etiquette">Reste à rembourser</p>
           <p class="montant" id="apercu-dettes">0,00 €</p>
         </article>
+        <article class="tuile">
+          <p class="etiquette">À mettre de côté ce mois</p>
+          <p class="montant" id="apercu-projets">0,00 €</p>
+          <p class="tuile-note" id="apercu-projets-note"></p>
+        </article>
       </div>
       <p class="vide" id="apercu-vide">Les chiffres apparaîtront ici dès que tu auras saisi tes premières recettes et dépenses.</p>
 
@@ -216,9 +221,58 @@
       <div class="dettes" id="liste-dettes"></div>
     </section>
 
+    <!-- ===== PROJETS (brique 6) ===== -->
     <section id="projets" class="page" hidden>
       <header class="entete"><p class="sur-titre">Ce que je prépare</p><h1>Projets</h1></header>
-      <p class="vide">Achats et financements à venir. On construit cette page à la brique 6.</p>
+
+      <form class="formulaire" id="formulaire-projet">
+        <div class="champ">
+          <label for="projet-libelle">Projet</label>
+          <input id="projet-libelle" name="libelle" type="text" placeholder="Ex. Permis de conduire" required>
+        </div>
+        <div class="champ">
+          <label for="projet-cout">Coût total (€)</label>
+          <input id="projet-cout" name="cout" type="number" min="1" step="0.01" placeholder="0,00" required>
+        </div>
+        <div class="champ">
+          <label for="projet-epargne">Déjà mis de côté (€)</label>
+          <input id="projet-epargne" name="epargne" type="number" min="0" step="0.01" value="0">
+        </div>
+        <div class="champ">
+          <label for="projet-date">Pour quand ?</label>
+          <input id="projet-date" name="date" type="month" required>
+        </div>
+        <div class="champ">
+          <label for="projet-financement">Financement</label>
+          <select id="projet-financement" name="financement">
+            <option value="epargne">Épargne uniquement</option>
+            <option value="credit">Apport + crédit</option>
+          </select>
+        </div>
+
+        <!-- Ces 3 champs n'apparaissent que si on choisit "Apport + crédit". -->
+        <div class="champ champ-credit" hidden>
+          <label for="projet-apport">Apport (€)</label>
+          <input id="projet-apport" name="apport" type="number" min="0" step="0.01" value="0">
+        </div>
+        <div class="champ champ-credit" hidden>
+          <label for="projet-taux">Taux du crédit (%)</label>
+          <input id="projet-taux" name="taux" type="number" min="0" step="0.01" value="0">
+        </div>
+        <div class="champ champ-credit" hidden>
+          <label for="projet-duree">Durée du crédit (mois)</label>
+          <input id="projet-duree" name="duree" type="number" min="1" step="1" value="48">
+        </div>
+
+        <button class="bouton" type="submit">Ajouter le projet</button>
+      </form>
+      <p class="erreur" id="projet-erreur" role="alert"></p>
+
+      <div class="liste-titre">
+        <h2>Mes projets</h2>
+        <p class="total" id="total-projets">0,00 € par mois</p>
+      </div>
+      <div class="dettes" id="liste-projets"></div>
     </section>
 
     <section id="prevision" class="page" hidden>

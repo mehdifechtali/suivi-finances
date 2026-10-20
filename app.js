@@ -50,6 +50,20 @@ let mouvements = [];
 // }
 let dettes = [];
 
+// Les projets (brique 6). Chaque projet ressemble à ceci :
+// {
+//   id: "1729420000000",
+//   libelle: "Voiture",
+//   cout: 9000,               prix total
+//   epargne: 500,             déjà mis de côté
+//   date: "2027-09",          mois visé (AAAA-MM)
+//   financement: "credit",    "epargne" ou "credit"
+//   apport: 2000,             (crédit) ce que je paie moi-même
+//   taux: 4.5,                (crédit) taux annuel en %
+//   duree: 48                 (crédit) durée en mois
+// }
+let projets = [];
+
 
 // =========================================================
 // 2 bis. LA MÉMOIRE (brique 4)
@@ -63,7 +77,7 @@ const CLE_STOCKAGE = "suivi-finances";
 // Rassemble toutes les données dans un seul objet.
 // (Utilisé pour la mémoire et pour l'export.)
 function toutesLesDonnees() {
-  return { version: 2, mouvements: mouvements, dettes: dettes };
+  return { version: 3, mouvements: mouvements, dettes: dettes, projets: projets };
 }
 
 // Écrit les données dans la mémoire du navigateur.
@@ -91,6 +105,10 @@ function charger() {
       // Les anciennes sauvegardes (version 1) n'ont pas encore de dettes.
       if (Array.isArray(donnees.dettes)) {
         dettes = donnees.dettes;
+      }
+      // Pareil pour les projets, apparus en version 3.
+      if (Array.isArray(donnees.projets)) {
+        projets = donnees.projets;
       }
     }
   } catch (erreur) {
@@ -223,6 +241,70 @@ function mensualitesDuMois(mois) {
     });
   });
   return total;
+}
+
+
+// =========================================================
+// 3 ter. LE CALCUL DES PROJETS (brique 6)
+// =========================================================
+
+// Nombre de mois entre deux mois : ecartMois("2026-10", "2027-01") → 3.
+function ecartMois(debut, fin) {
+  const annees = Number(fin.slice(0, 4)) - Number(debut.slice(0, 4));
+  const mois = Number(fin.slice(5, 7)) - Number(debut.slice(5, 7));
+  return annees * 12 + mois;
+}
+
+// La mensualité d'un crédit, avec la formule utilisée par les banques :
+//   mensualité = montant × t ÷ (1 − (1 + t) ^ −durée)
+// où t est le taux mensuel. Sans intérêts, c'est simplement montant ÷ durée.
+function mensualiteCredit(montant, tauxAnnuel, duree) {
+  if (montant <= 0) return 0;
+  const t = tauxAnnuel / 100 / 12;
+  if (t === 0) return arrondir(montant / duree);
+  return arrondir(montant * t / (1 - Math.pow(1 + t, -duree)));
+}
+
+// Tous les chiffres d'un projet, calculés à partir de ce qu'on a saisi.
+function calculerProjet(projet) {
+  const credit = projet.financement === "credit";
+
+  // Ce que je dois réunir moi-même : tout le prix, ou seulement l'apport.
+  const objectifEpargne = credit ? Math.min(projet.apport, projet.cout) : projet.cout;
+  const resteAEpargner = Math.max(0, objectifEpargne - projet.epargne);
+
+  // On épargne du mois actuel jusqu'au mois qui précède la date visée.
+  // Si la date est ce mois-ci (ou déjà passée), il reste 1 mois : c'est urgent.
+  const moisRestants = Math.max(1, ecartMois(moisActuel(), projet.date));
+  const epargneMensuelle = arrondir(resteAEpargner / moisRestants);
+
+  const emprunt = credit ? Math.max(0, projet.cout - projet.apport) : 0;
+
+  return {
+    objectifEpargne: objectifEpargne,
+    resteAEpargner: resteAEpargner,
+    moisRestants: moisRestants,
+    epargneMensuelle: epargneMensuelle,
+    urgent: ecartMois(moisActuel(), projet.date) <= 0 && resteAEpargner > 0,
+    emprunt: emprunt,
+    mensualite: credit ? mensualiteCredit(emprunt, projet.taux, projet.duree) : 0,
+    coutCredit: credit ? arrondir(mensualiteCredit(emprunt, projet.taux, projet.duree) * projet.duree - emprunt) : 0
+  };
+}
+
+// Total à mettre de côté pour tous les projets, pour un mois donné.
+// Un projet demande de l'épargne pendant ses "moisRestants",
+// à partir du mois actuel. Ex. 3 mois restants → ce mois-ci et les 2 suivants.
+function epargneProjetsDuMois(mois) {
+  let total = 0;
+  projets.forEach(function (projet) {
+    const calcul = calculerProjet(projet);
+    const position = ecartMois(moisActuel(), mois); // 0 = ce mois-ci, 1 = le suivant…
+    if (position >= 0 && position < calcul.moisRestants) {
+      total = total + calcul.epargneMensuelle;
+    }
+  });
+  return arrondir(total);
 }
 
 
@@ -368,19 +450,29 @@ function afficherApercu() {
   });
   document.getElementById("apercu-dettes").textContent = formaterEuros(resteDettes);
 
+  // L'épargne à prévoir ce mois-ci pour les projets.
+  const epargneProjets = epargneProjetsDuMois(mois);
+  document.getElementById("apercu-projets").textContent = formaterEuros(epargneProjets);
+  document.getElementById("apercu-projets-note").textContent =
+    projets.length > 0
+      ? "Reste après épargne : " + formaterEuros(solde - epargneProjets)
+      : "";
+
   const caseSolde = document.getElementById("apercu-solde");
   caseSolde.textContent = formaterEuros(solde);
   caseSolde.classList.toggle("positif", solde > 0);
   caseSolde.classList.toggle("negatif", solde < 0);
 
   // Le message d'attente disparaît dès qu'il y a une donnée.
-  document.getElementById("apercu-vide").hidden = mouvements.length > 0 || dettes.length > 0;
+  document.getElementById("apercu-vide").hidden =
+    mouvements.length > 0 || dettes.length > 0 || projets.length > 0;
 }
 
 function toutAfficher() {
   afficherListe("recette");
   afficherListe("depense");
   afficherDettes();
+  afficherProjets();
   afficherApercu();
 }
 
@@ -530,6 +622,182 @@ function afficherDettes() {
     "Total : " + formaterEuros(totalRestant);
 }
 
+
+// =========================================================
+// 6 ter. LES PROJETS : AJOUTER, METTRE À JOUR, AFFICHER (brique 6)
+// =========================================================
+
+const formulaireProjet = document.getElementById("formulaire-projet");
+const erreurProjet = document.getElementById("projet-erreur");
+const champsCredit = document.querySelectorAll(".champ-credit");
+
+// Par défaut, le projet est prévu dans 6 mois.
+formulaireProjet.elements.date.value = moisPlus(moisActuel(), 6);
+
+// Affiche ou cache les champs du crédit selon le financement choisi.
+formulaireProjet.elements.financement.addEventListener("change", function () {
+  const credit = formulaireProjet.elements.financement.value === "credit";
+  champsCredit.forEach(function (champ) { champ.hidden = !credit; });
+});
+
+formulaireProjet.addEventListener("submit", function (evenement) {
+  evenement.preventDefault();
+  const champs = formulaireProjet.elements;
+
+  const nouveau = {
+    id: String(Date.now()),
+    libelle: champs.libelle.value.trim(),
+    cout: Number(champs.cout.value),
+    epargne: Number(champs.epargne.value) || 0,
+    date: champs.date.value,
+    financement: champs.financement.value,
+    apport: Number(champs.apport.value) || 0,
+    taux: Number(champs.taux.value) || 0,
+    duree: Number(champs.duree.value) || 1
+  };
+
+  if (nouveau.financement === "credit" && nouveau.apport >= nouveau.cout) {
+    erreurProjet.textContent =
+      "L'apport couvre tout le prix : choisis plutôt « Épargne uniquement ».";
+    return;
+  }
+  erreurProjet.textContent = "";
+
+  projets.push(nouveau);
+  enregistrer();
+
+  champs.libelle.value = "";
+  champs.cout.value = "";
+  champs.epargne.value = "0";
+  champs.libelle.focus();
+
+  toutAfficher();
+});
+
+function supprimerProjet(id) {
+  projets = projets.filter(function (p) { return p.id !== id; });
+  enregistrer();
+  toutAfficher();
+}
+
+// Change le montant déjà mis de côté pour un projet.
+function mettreAJourEpargne(id, montant) {
+  projets.forEach(function (p) {
+    if (p.id === id) p.epargne = montant;
+  });
+  enregistrer();
+  toutAfficher();
+}
+
+// Projet réalisé : un crédit devient une vraie dette, puis le projet disparaît.
+function projetRealise(projet) {
+  const calcul = calculerProjet(projet);
+  let texte = "Marquer « " + projet.libelle + " » comme réalisé ?";
+  if (projet.financement === "credit") {
+    texte += " Le crédit de " + formaterEuros(calcul.emprunt) + " sera ajouté à tes dettes.";
+  }
+  if (!confirm(texte)) return;
+
+  if (projet.financement === "credit") {
+    dettes.push({
+      id: String(Date.now()),
+      libelle: "Crédit " + projet.libelle,
+      restant: calcul.emprunt,
+      mensualite: calcul.mensualite,
+      taux: projet.taux,
+      // Première mensualité : le 5 du mois qui suit le mois visé.
+      debut: moisPlus(projet.date, 1) + "-05"
+    });
+  }
+  supprimerProjet(projet.id);
+}
+
+function afficherProjets() {
+  const conteneur = document.getElementById("liste-projets");
+  conteneur.innerHTML = "";
+
+  projets.forEach(function (projet) {
+    const calcul = calculerProjet(projet);
+    const credit = projet.financement === "credit";
+
+    const carte = creer("article", "dette");
+
+    // Le haut : titre, badge, bouton supprimer.
+    const haut = creer("div", "dette-haut");
+    const titres = creer("div");
+    const titre = creer("p", "dette-titre", projet.libelle);
+    titre.appendChild(creer("span", "badge", credit ? "Apport + crédit" : "Épargne"));
+    if (calcul.urgent) titre.appendChild(creer("span", "badge urgent", "Date atteinte"));
+    titres.append(
+      titre,
+      creer("p", "dette-sous-titre",
+        formaterEuros(projet.cout) + " · prévu pour " + formaterMois(projet.date))
+    );
+    const bouton = creer("button", "supprimer", "×");
+    bouton.type = "button";
+    bouton.setAttribute("aria-label", "Supprimer " + projet.libelle);
+    bouton.addEventListener("click", function () { supprimerProjet(projet.id); });
+    haut.append(titres, bouton);
+
+    // La barre : ce qui est déjà mis de côté par rapport à l'objectif.
+    const pourcentage = calcul.objectifEpargne > 0
+      ? (projet.epargne / calcul.objectifEpargne) * 100
+      : 100;
+    const barre = creer("div", "barre");
+    const remplie = creer("div", "barre-remplie accent");
+    remplie.style.width = Math.max(0, Math.min(100, pourcentage)) + "%";
+    barre.appendChild(remplie);
+
+    // Les chiffres clés.
+    const chiffres = creer("dl", "dette-chiffres");
+    function ajouterChiffre(etiquette, valeur) {
+      const bloc = creer("div");
+      bloc.append(creer("dt", "", etiquette), creer("dd", "", valeur));
+      chiffres.appendChild(bloc);
+    }
+    ajouterChiffre(credit ? "Apport à réunir" : "Objectif", formaterEuros(calcul.objectifEpargne));
+    ajouterChiffre("Reste à épargner", formaterEuros(calcul.resteAEpargner));
+    ajouterChiffre("Par mois", formaterEuros(calcul.epargneMensuelle) +
+      " (" + calcul.moisRestants + " mois)");
+    if (credit) {
+      ajouterChiffre("Montant emprunté", formaterEuros(calcul.emprunt));
+      ajouterChiffre("Future mensualité", formaterEuros(calcul.mensualite) +
+        " × " + projet.duree);
+      ajouterChiffre("Coût du crédit", formaterEuros(calcul.coutCredit));
+    }
+
+    // Les actions : mettre à jour l'épargne, marquer comme réalisé.
+    const actions = creer("div", "projet-actions");
+    const champ = creer("div", "champ");
+    const idChamp = "epargne-" + projet.id;
+    const label = creer("label", "", "Déjà mis de côté (€)");
+    label.htmlFor = idChamp;
+    const saisie = creer("input");
+    saisie.id = idChamp;
+    saisie.type = "number";
+    saisie.min = "0";
+    saisie.step = "0.01";
+    saisie.value = projet.epargne;
+    // "change" se déclenche quand on quitte le champ ou qu'on valide.
+    saisie.addEventListener("change", function () {
+      mettreAJourEpargne(projet.id, Number(saisie.value) || 0);
+    });
+    champ.append(label, saisie);
+
+    const boutonRealise = creer("button", "bouton bouton-secondaire bouton-petit", "Projet réalisé");
+    boutonRealise.type = "button";
+    boutonRealise.addEventListener("click", function () { projetRealise(projet); });
+
+    actions.append(champ, boutonRealise);
+
+    carte.append(haut, barre, chiffres, actions);
+    conteneur.appendChild(carte);
+  });
+
+  document.getElementById("total-projets").textContent =
+    formaterEuros(epargneProjetsDuMois(moisActuel())) + " par mois";
+}
+
 // =========================================================
 // 7. EXPORTER ET IMPORTER UNE COPIE (brique 4)
 // =========================================================
@@ -550,7 +818,8 @@ document.getElementById("bouton-exporter").addEventListener("click", function ()
   lien.click();
   URL.revokeObjectURL(lien.href);
 
-  message.textContent = "Fichier exporté : " + mouvements.length + " ligne(s) et " + dettes.length + " dette(s).";
+  message.textContent = "Fichier exporté : " + mouvements.length + " ligne(s), " +
+    dettes.length + " dette(s) et " + projets.length + " projet(s).";
 });
 
 // Importer : le bouton visible ouvre le champ "fichier" caché.
@@ -574,17 +843,20 @@ champFichier.addEventListener("change", function () {
       }
 
       const dettesDuFichier = Array.isArray(donnees.dettes) ? donnees.dettes : [];
+      const projetsDuFichier = Array.isArray(donnees.projets) ? donnees.projets : [];
       const ok = confirm(
-        "Ce fichier contient " + donnees.mouvements.length + " ligne(s) et " +
-        dettesDuFichier.length + " dette(s). " +
+        "Ce fichier contient " + donnees.mouvements.length + " ligne(s), " +
+        dettesDuFichier.length + " dette(s) et " + projetsDuFichier.length + " projet(s). " +
         "Il va remplacer les données actuelles de cet appareil. Continuer ?"
       );
       if (ok) {
         mouvements = donnees.mouvements;
         dettes = dettesDuFichier;
+        projets = projetsDuFichier;
         enregistrer();
         toutAfficher();
-        message.textContent = "Import réussi : " + mouvements.length + " ligne(s) et " + dettes.length + " dette(s).";
+        message.textContent = "Import réussi : " + mouvements.length + " ligne(s), " +
+          dettes.length + " dette(s) et " + projets.length + " projet(s).";
       }
     } catch (erreur) {
       message.textContent = "Ce fichier n'est pas une copie de Suivi Finances. Choisis un fichier exporté depuis l'app.";
