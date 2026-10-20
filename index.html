@@ -47,38 +47,119 @@
 
     <section id="apercu" class="page">
       <header class="entete">
-        <p class="sur-titre">Octobre 2026</p>
+        <p class="sur-titre" id="mois-courant">Ce mois-ci</p>
         <h1>Aperçu</h1>
       </header>
       <div class="grille">
         <article class="tuile">
           <p class="etiquette">Solde du mois</p>
-          <p class="montant">— €</p>
+          <p class="montant" id="apercu-solde">0,00 €</p>
         </article>
         <article class="tuile">
-          <p class="etiquette">Recettes</p>
-          <p class="montant positif">— €</p>
+          <p class="etiquette">Recettes du mois</p>
+          <p class="montant positif" id="apercu-recettes">0,00 €</p>
         </article>
         <article class="tuile">
-          <p class="etiquette">Dépenses</p>
-          <p class="montant negatif">— €</p>
+          <p class="etiquette">Dépenses du mois</p>
+          <p class="montant negatif" id="apercu-depenses">0,00 €</p>
         </article>
         <article class="tuile">
           <p class="etiquette">Reste à rembourser</p>
           <p class="montant">— €</p>
         </article>
       </div>
-      <p class="vide">Les chiffres apparaîtront ici dès que tu auras saisi tes premières recettes et dépenses.</p>
+      <p class="vide" id="apercu-vide">Les chiffres apparaîtront ici dès que tu auras saisi tes premières recettes et dépenses.</p>
     </section>
 
+    <!-- ===== RECETTES ===== -->
     <section id="recettes" class="page" hidden>
       <header class="entete"><p class="sur-titre">Ce qui rentre</p><h1>Recettes</h1></header>
-      <p class="vide">Salaire, factures, autres revenus. On construit cette page à la brique 3.</p>
+
+      <!-- Le formulaire. data-type dit au JavaScript s'il s'agit d'une recette ou d'une dépense. -->
+      <form class="formulaire" data-type="recette">
+        <div class="champ">
+          <label for="recette-libelle">Libellé</label>
+          <input id="recette-libelle" name="libelle" type="text" placeholder="Ex. Salaire McDo" required>
+        </div>
+        <div class="champ">
+          <label for="recette-montant">Montant (€)</label>
+          <input id="recette-montant" name="montant" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+        </div>
+        <div class="champ">
+          <label for="recette-categorie">Catégorie</label>
+          <select id="recette-categorie" name="categorie">
+            <option>Salaire</option>
+            <option>Auto-entreprise</option>
+            <option>Aides</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div class="champ">
+          <label for="recette-date">Date</label>
+          <input id="recette-date" name="date" type="date" required>
+        </div>
+        <div class="champ">
+          <label for="recette-frequence">Fréquence</label>
+          <select id="recette-frequence" name="frequence">
+            <option value="ponctuel">Une seule fois</option>
+            <option value="mensuel">Tous les mois</option>
+          </select>
+        </div>
+        <button class="bouton" type="submit">Ajouter la recette</button>
+      </form>
+
+      <!-- La liste, remplie par le JavaScript. -->
+      <div class="liste-titre">
+        <h2>Toutes les recettes</h2>
+        <p class="total positif" id="total-recette">0,00 €</p>
+      </div>
+      <ul class="liste" id="liste-recette"></ul>
     </section>
 
+    <!-- ===== DÉPENSES ===== -->
     <section id="depenses" class="page" hidden>
       <header class="entete"><p class="sur-titre">Ce qui sort</p><h1>Dépenses</h1></header>
-      <p class="vide">Loyer, courses, abonnements… On construit cette page à la brique 3.</p>
+
+      <form class="formulaire" data-type="depense">
+        <div class="champ">
+          <label for="depense-libelle">Libellé</label>
+          <input id="depense-libelle" name="libelle" type="text" placeholder="Ex. Loyer" required>
+        </div>
+        <div class="champ">
+          <label for="depense-montant">Montant (€)</label>
+          <input id="depense-montant" name="montant" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+        </div>
+        <div class="champ">
+          <label for="depense-categorie">Catégorie</label>
+          <select id="depense-categorie" name="categorie">
+            <option>Logement</option>
+            <option>Courses</option>
+            <option>Transport</option>
+            <option>Abonnements</option>
+            <option>Santé</option>
+            <option>Loisirs</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div class="champ">
+          <label for="depense-date">Date</label>
+          <input id="depense-date" name="date" type="date" required>
+        </div>
+        <div class="champ">
+          <label for="depense-frequence">Fréquence</label>
+          <select id="depense-frequence" name="frequence">
+            <option value="ponctuel">Une seule fois</option>
+            <option value="mensuel">Tous les mois</option>
+          </select>
+        </div>
+        <button class="bouton" type="submit">Ajouter la dépense</button>
+      </form>
+
+      <div class="liste-titre">
+        <h2>Toutes les dépenses</h2>
+        <p class="total negatif" id="total-depense">0,00 €</p>
+      </div>
+      <ul class="liste" id="liste-depense"></ul>
     </section>
 
     <section id="dettes" class="page" hidden>

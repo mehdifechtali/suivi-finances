@@ -167,7 +167,135 @@ main {
 }
 
 /* =========================================================
-   5. SUR TÉLÉPHONE (écran de moins de 760 pixels)
+   5. FORMULAIRES ET LISTES (brique 3)
+   ========================================================= */
+h2 {
+  font-family: var(--police-titre);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+/* Le formulaire : les champs se rangent sur plusieurs colonnes
+   quand il y a de la place, sur une seule sur téléphone. */
+.formulaire {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  align-items: end;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 20px;
+}
+
+.champ { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--texte-doux);
+}
+
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--bordure);
+  border-radius: 10px;
+  background: var(--fond);
+  color: var(--texte);
+  font: 400 1rem var(--police-texte);
+}
+input:focus, select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.bouton {
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #FFFFFF;
+  font: 600 0.95rem var(--police-texte);
+  cursor: pointer;
+}
+.bouton:hover { filter: brightness(1.08); }
+.bouton:focus-visible { outline: 2px solid var(--texte); outline-offset: 2px; }
+
+/* Le titre de la liste avec le total à droite. */
+.liste-titre {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 36px 0 12px;
+}
+.total {
+  margin: 0;
+  font-family: var(--police-chiffres);
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* La liste des lignes. */
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+}
+.liste:empty { display: none; }
+
+.ligne {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--bordure);
+}
+.ligne:last-child { border-bottom: 0; }
+
+.ligne-info { min-width: 0; }
+.ligne-libelle { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.ligne-details { margin: 2px 0 0; font-size: 0.85rem; color: var(--texte-doux); }
+
+/* La pastille "Tous les mois". */
+.pastille {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--accent-doux);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ligne-montant {
+  font-family: var(--police-chiffres);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.supprimer {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--texte-doux);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.supprimer:hover { background: var(--fond); color: var(--negatif); }
+.supprimer:focus-visible { outline: 2px solid var(--accent); }
+
+/* =========================================================
+   6. SUR TÉLÉPHONE (écran de moins de 760 pixels)
    Le menu passe en barre fixe en bas de l'écran.
    ========================================================= */
 @media (max-width: 760px) {
