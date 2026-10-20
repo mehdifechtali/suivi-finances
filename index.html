@@ -69,6 +69,21 @@
         </article>
       </div>
       <p class="vide" id="apercu-vide">Les chiffres apparaîtront ici dès que tu auras saisi tes premières recettes et dépenses.</p>
+
+      <!-- Copie de sécurité (brique 4). -->
+      <div class="sauvegarde">
+        <div>
+          <h2>Copie de sécurité</h2>
+          <p class="sauvegarde-texte">Tes données sont enregistrées sur cet appareil uniquement. Exporte un fichier de temps en temps pour ne rien perdre, ou pour les transférer sur un autre appareil.</p>
+        </div>
+        <div class="sauvegarde-boutons">
+          <button class="bouton bouton-secondaire" id="bouton-exporter" type="button">Exporter mes données</button>
+          <!-- Le vrai champ "fichier" est caché : on l'ouvre en cliquant sur le bouton Importer. -->
+          <input id="fichier-import" type="file" accept=".json,application/json" hidden>
+          <button class="bouton bouton-secondaire" id="bouton-importer" type="button">Importer un fichier</button>
+        </div>
+        <p class="sauvegarde-message" id="sauvegarde-message" role="status"></p>
+      </div>
     </section>
 
     <!-- ===== RECETTES ===== -->

@@ -295,7 +295,45 @@ input:focus, select:focus {
 .supprimer:focus-visible { outline: 2px solid var(--accent); }
 
 /* =========================================================
-   6. SUR TÉLÉPHONE (écran de moins de 760 pixels)
+   6. COPIE DE SÉCURITÉ (brique 4)
+   ========================================================= */
+.sauvegarde {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--bordure);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px 24px;
+}
+.sauvegarde > div:first-child { flex: 1 1 320px; min-width: 0; }
+.sauvegarde-texte {
+  margin: 6px 0 0;
+  color: var(--texte-doux);
+  font-size: 0.92rem;
+  max-width: 60ch;
+}
+.sauvegarde-boutons { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Un bouton plus discret que le bouton principal. */
+.bouton-secondaire {
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--bordure);
+}
+.bouton-secondaire:hover { background: var(--accent-doux); filter: none; }
+
+.sauvegarde-message {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--texte-doux);
+}
+.sauvegarde-message:empty { display: none; }
+
+/* =========================================================
+   7. SUR TÉLÉPHONE (écran de moins de 760 pixels)
    Le menu passe en barre fixe en bas de l'écran.
    ========================================================= */
 @media (max-width: 760px) {

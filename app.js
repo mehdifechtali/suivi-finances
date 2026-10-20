@@ -35,11 +35,52 @@ onglets.forEach(function (onglet) {
 //   date: "2026-10-05",      format AAAA-MM-JJ
 //   frequence: "mensuel"     "ponctuel" ou "mensuel"
 // }
-// Pour l'instant ce tableau est vidé quand on recharge la page.
-// La brique 4 servira à le garder en mémoire.
 // =========================================================
 
 let mouvements = [];
+
+
+// =========================================================
+// 2 bis. LA MÉMOIRE (brique 4)
+// Le navigateur a un petit espace de stockage appelé
+// "localStorage". On y range nos données sous forme de texte,
+// avec un nom (la "clé") pour les retrouver.
+// =========================================================
+
+const CLE_STOCKAGE = "suivi-finances";
+
+// Écrit les données dans la mémoire du navigateur.
+function enregistrer() {
+  const donnees = { version: 1, mouvements: mouvements };
+  try {
+    // JSON.stringify transforme notre tableau en texte.
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(donnees));
+  } catch (erreur) {
+    // Arrive par exemple en navigation privée : l'app marche, mais sans mémoire.
+    console.warn("Impossible d'enregistrer :", erreur);
+  }
+}
+
+// Relit les données au démarrage de l'app.
+function charger() {
+  try {
+    const texte = localStorage.getItem(CLE_STOCKAGE);
+    if (texte) {
+      // JSON.parse fait l'inverse : il retransforme le texte en tableau.
+      const donnees = JSON.parse(texte);
+      if (Array.isArray(donnees.mouvements)) {
+        mouvements = donnees.mouvements;
+      }
+    }
+  } catch (erreur) {
+    console.warn("Impossible de relire les données :", erreur);
+  }
+}
+
+// Demande au navigateur de ne pas effacer nos données s'il manque de place.
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist();
+}
 
 
 // =========================================================
@@ -113,6 +154,7 @@ formulaires.forEach(function (formulaire) {
     };
 
     mouvements.push(nouveau);
+    enregistrer();
 
     // On vide le libellé et le montant pour la saisie suivante,
     // et on remet le curseur dans le premier champ.
@@ -134,6 +176,7 @@ function supprimer(id) {
   mouvements = mouvements.filter(function (m) {
     return m.id !== id;
   });
+  enregistrer();
   toutAfficher();
 }
 
@@ -230,5 +273,71 @@ function toutAfficher() {
   afficherApercu();
 }
 
-// Premier affichage au chargement de la page.
+// =========================================================
+// 7. EXPORTER ET IMPORTER UNE COPIE (brique 4)
+// =========================================================
+
+const message = document.getElementById("sauvegarde-message");
+
+// Exporter : on fabrique un fichier .json et on le propose au téléchargement.
+// Sur iPhone, Safari propose alors de l'enregistrer dans l'app Fichiers.
+document.getElementById("bouton-exporter").addEventListener("click", function () {
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const donnees = { version: 1, exporteLe: aujourdhui, mouvements: mouvements };
+  const fichier = new Blob([JSON.stringify(donnees, null, 2)], { type: "application/json" });
+
+  const lien = document.createElement("a");
+  lien.href = URL.createObjectURL(fichier);
+  lien.download = "suivi-finances-" + aujourdhui + ".json";
+  lien.click();
+  URL.revokeObjectURL(lien.href);
+
+  message.textContent = "Fichier exporté : " + mouvements.length + " ligne(s).";
+});
+
+// Importer : le bouton visible ouvre le champ "fichier" caché.
+const champFichier = document.getElementById("fichier-import");
+
+document.getElementById("bouton-importer").addEventListener("click", function () {
+  champFichier.click();
+});
+
+// Quand un fichier est choisi, on le lit.
+champFichier.addEventListener("change", function () {
+  const fichier = champFichier.files[0];
+  if (!fichier) return;
+
+  const lecteur = new FileReader();
+  lecteur.onload = function () {
+    try {
+      const donnees = JSON.parse(lecteur.result);
+      if (!Array.isArray(donnees.mouvements)) {
+        throw new Error("format inconnu");
+      }
+
+      const ok = confirm(
+        "Ce fichier contient " + donnees.mouvements.length + " ligne(s). " +
+        "Il va remplacer les données actuelles de cet appareil. Continuer ?"
+      );
+      if (ok) {
+        mouvements = donnees.mouvements;
+        enregistrer();
+        toutAfficher();
+        message.textContent = "Import réussi : " + mouvements.length + " ligne(s) chargée(s).";
+      }
+    } catch (erreur) {
+      message.textContent = "Ce fichier n'est pas une copie de Suivi Finances. Choisis un fichier exporté depuis l'app.";
+    }
+    champFichier.value = ""; // permet de réimporter le même fichier plus tard
+  };
+  lecteur.readAsText(fichier);
+});
+
+
+// =========================================================
+// 8. DÉMARRAGE
+// On relit la mémoire, puis on affiche tout.
+// =========================================================
+
+charger();
 toutAfficher();
