@@ -275,9 +275,52 @@
       <div class="dettes" id="liste-projets"></div>
     </section>
 
+    <!-- ===== PRÉVISION (brique 7) ===== -->
     <section id="prevision" class="page" hidden>
-      <header class="entete"><p class="sur-titre">Les 12 prochains mois</p><h1>Prévision</h1></header>
-      <p class="vide">L'évolution de ton solde mois par mois. On construit cette page à la brique 7.</p>
+      <header class="entete"><p class="sur-titre">Mois par mois</p><h1>Prévision</h1></header>
+
+      <form class="formulaire" id="formulaire-prevision">
+        <div class="champ">
+          <label for="prevision-solde" id="prevision-solde-label">Solde du compte au 1er du mois (€)</label>
+          <input id="prevision-solde" name="solde" type="number" step="0.01" value="0">
+        </div>
+        <div class="champ">
+          <label for="prevision-horizon">Sur combien de mois ?</label>
+          <select id="prevision-horizon" name="horizon">
+            <option value="3">3 mois</option>
+            <option value="6">6 mois</option>
+            <option value="12" selected>12 mois</option>
+            <option value="24">24 mois</option>
+          </select>
+        </div>
+      </form>
+
+      <!-- Le verdict : tout va bien, ou alerte. -->
+      <p class="verdict" id="prevision-verdict" role="status"></p>
+
+      <!-- Le graphique, dessiné par le JavaScript. -->
+      <figure class="graphique">
+        <figcaption>Solde du compte en fin de mois</figcaption>
+        <div id="prevision-graphique"></div>
+      </figure>
+
+      <!-- Le détail mois par mois. -->
+      <h2 class="titre-tableau">Le détail</h2>
+      <div class="tableau-conteneur tableau-prevision">
+        <table>
+          <thead>
+            <tr>
+              <th>Mois</th>
+              <th>Recettes</th>
+              <th>Dépenses</th>
+              <th>Dettes</th>
+              <th>Épargne projets</th>
+              <th>Solde fin de mois</th>
+            </tr>
+          </thead>
+          <tbody id="prevision-tableau"></tbody>
+        </table>
+      </div>
     </section>
 
   </main>

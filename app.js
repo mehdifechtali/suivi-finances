@@ -64,6 +64,9 @@ let dettes = [];
 // }
 let projets = [];
 
+// Les réglages de la prévision (brique 7).
+let parametres = { soldeDepart: 0, horizon: 12 };
+
 
 // =========================================================
 // 2 bis. LA MÉMOIRE (brique 4)
@@ -77,7 +80,7 @@ const CLE_STOCKAGE = "suivi-finances";
 // Rassemble toutes les données dans un seul objet.
 // (Utilisé pour la mémoire et pour l'export.)
 function toutesLesDonnees() {
-  return { version: 3, mouvements: mouvements, dettes: dettes, projets: projets };
+  return { version: 4, mouvements: mouvements, dettes: dettes, projets: projets, parametres: parametres };
 }
 
 // Écrit les données dans la mémoire du navigateur.
@@ -109,6 +112,10 @@ function charger() {
       // Pareil pour les projets, apparus en version 3.
       if (Array.isArray(donnees.projets)) {
         projets = donnees.projets;
+      }
+      // Et les réglages de la prévision, apparus en version 4.
+      if (donnees.parametres) {
+        parametres = donnees.parametres;
       }
     }
   } catch (erreur) {
@@ -307,6 +314,54 @@ function epargneProjetsDuMois(mois) {
   return arrondir(total);
 }
 
+// Les mensualités des crédits PRÉVUS dans les projets (pas encore signés).
+// Elles commencent le mois qui suit la date du projet.
+function creditsPrevusDuMois(mois) {
+  let total = 0;
+  projets.forEach(function (projet) {
+    if (projet.financement !== "credit") return;
+    const debut = moisPlus(projet.date, 1);
+    const position = ecartMois(debut, mois);
+    if (position >= 0 && position < projet.duree) {
+      total = total + calculerProjet(projet).mensualite;
+    }
+  });
+  return arrondir(total);
+}
+
+
+// =========================================================
+// 3 quater. LA PRÉVISION (brique 7)
+// On part du solde de départ et on avance mois par mois.
+// Le solde de fin d'un mois devient le solde de début du suivant.
+// =========================================================
+
+function calculerPrevision(soldeDepart, horizon) {
+  const lignes = [];
+  let solde = soldeDepart;
+
+  for (let i = 0; i < horizon; i++) {
+    const mois = moisPlus(moisActuel(), i);
+
+    const recettes = totalDuMois("recette", mois);
+    const depenses = totalDuMois("depense", mois);
+    const remboursements = arrondir(mensualitesDuMois(mois) + creditsPrevusDuMois(mois));
+    const epargne = epargneProjetsDuMois(mois);
+
+    solde = arrondir(solde + recettes - depenses - remboursements - epargne);
+
+    lignes.push({
+      mois: mois,
+      recettes: recettes,
+      depenses: depenses,
+      remboursements: remboursements,
+      epargne: epargne,
+      solde: solde
+    });
+  }
+  return lignes;
+}
+
 
 // =========================================================
 // 4. AJOUTER UN MOUVEMENT (quand on valide un formulaire)
@@ -473,6 +528,7 @@ function toutAfficher() {
   afficherListe("depense");
   afficherDettes();
   afficherProjets();
+  afficherPrevision();
   afficherApercu();
 }
 
@@ -798,6 +854,139 @@ function afficherProjets() {
     formaterEuros(epargneProjetsDuMois(moisActuel())) + " par mois";
 }
 
+
+// =========================================================
+// 6 quater. LA PRÉVISION : RÉGLAGES, VERDICT, GRAPHIQUE, TABLEAU (brique 7)
+// =========================================================
+
+const formulairePrevision = document.getElementById("formulaire-prevision");
+
+// Dès qu'on change le solde ou l'horizon, on enregistre et on recalcule.
+formulairePrevision.addEventListener("input", function () {
+  parametres.soldeDepart = Number(formulairePrevision.elements.solde.value) || 0;
+  parametres.horizon = Number(formulairePrevision.elements.horizon.value) || 12;
+  enregistrer();
+  afficherPrevision();
+});
+formulairePrevision.addEventListener("submit", function (e) { e.preventDefault(); });
+
+function afficherPrevision() {
+  // Les champs reprennent les réglages enregistrés.
+  const champs = formulairePrevision.elements;
+  if (document.activeElement !== champs.solde) champs.solde.value = parametres.soldeDepart;
+  champs.horizon.value = String(parametres.horizon);
+  document.getElementById("prevision-solde-label").textContent =
+    "Solde du compte au 1er " +
+    new Date().toLocaleDateString("fr-FR", { month: "long" }) + " (€)";
+
+  const lignes = calculerPrevision(parametres.soldeDepart, parametres.horizon);
+
+  // --- Le verdict ---
+  const verdict = document.getElementById("prevision-verdict");
+  const premierRouge = lignes.find(function (l) { return l.solde < 0; });
+  const derniere = lignes[lignes.length - 1];
+  if (premierRouge) {
+    verdict.className = "verdict alerte";
+    verdict.textContent =
+      "Attention : en " + formaterMois(premierRouge.mois) + ", ton solde passe à " +
+      formaterEuros(premierRouge.solde) + ". Réduis une dépense ou décale un projet avant ce mois-là.";
+  } else {
+    verdict.className = "verdict ok";
+    verdict.textContent =
+      "Aucun mois dans le rouge sur les " + lignes.length + " prochains mois. Solde prévu fin " +
+      formaterMois(derniere.mois) + " : " + formaterEuros(derniere.solde) + ".";
+  }
+
+  // --- Le tableau ---
+  const corps = document.getElementById("prevision-tableau");
+  corps.innerHTML = "";
+  lignes.forEach(function (l) {
+    const tr = creer("tr");
+    const caseSolde = creer("td", l.solde < 0 ? "negatif" : "", formaterEuros(l.solde));
+    tr.append(
+      creer("td", "", formaterMois(l.mois)),
+      creer("td", "", formaterEuros(l.recettes)),
+      creer("td", "", formaterEuros(l.depenses)),
+      creer("td", "", formaterEuros(l.remboursements)),
+      creer("td", "", formaterEuros(l.epargne)),
+      caseSolde
+    );
+    corps.appendChild(tr);
+  });
+
+  // --- Le graphique ---
+  dessinerGraphique(lignes);
+}
+
+// Dessine une courbe en SVG (le format de dessin du web).
+// Le principe : on transforme chaque montant en position (x, y) sur le dessin.
+function dessinerGraphique(lignes) {
+  const largeur = 640, hauteur = 240;
+  const marge = { haut: 24, droite: 16, bas: 28, gauche: 64 };
+  const zoneL = largeur - marge.gauche - marge.droite;
+  const zoneH = hauteur - marge.haut - marge.bas;
+
+  // L'échelle verticale va du plus petit au plus grand solde, en incluant 0.
+  const soldes = lignes.map(function (l) { return l.solde; });
+  let min = Math.min(0, ...soldes);
+  let max = Math.max(0, ...soldes);
+  if (min === max) max = min + 100;
+  const ecart = max - min;
+  min = min - ecart * 0.08;
+  max = max + ecart * 0.08;
+
+  // Les deux fonctions de conversion "montant → position".
+  function x(i) {
+    return marge.gauche + (lignes.length === 1 ? zoneL / 2 : (i / (lignes.length - 1)) * zoneL);
+  }
+  function y(montant) {
+    return marge.haut + ((max - montant) / (max - min)) * zoneH;
+  }
+
+  let svg = '<svg viewBox="0 0 ' + largeur + " " + hauteur + '" role="img" aria-label="Courbe du solde prévu">';
+
+  // Les lignes de repère horizontales et leurs montants.
+  for (let k = 0; k <= 4; k++) {
+    const valeur = min + (k / 4) * (max - min);
+    const py = y(valeur);
+    svg += '<line class="g-grille" x1="' + marge.gauche + '" x2="' + (largeur - marge.droite) +
+      '" y1="' + py + '" y2="' + py + '"/>';
+    svg += '<text class="g-texte" x="' + (marge.gauche - 8) + '" y="' + (py + 4) +
+      '" text-anchor="end">' + Math.round(valeur).toLocaleString("fr-FR") + " €</text>";
+  }
+
+  // La ligne du zéro, en pointillés.
+  svg += '<line class="g-zero" x1="' + marge.gauche + '" x2="' + (largeur - marge.droite) +
+    '" y1="' + y(0) + '" y2="' + y(0) + '"/>';
+
+  // La courbe, et la zone colorée en dessous.
+  const points = lignes.map(function (l, i) { return x(i) + "," + y(l.solde); });
+  svg += '<polygon class="g-aire" points="' + x(0) + "," + y(0) + " " + points.join(" ") + " " +
+    x(lignes.length - 1) + "," + y(0) + '"/>';
+  svg += '<polyline class="g-ligne" points="' + points.join(" ") + '"/>';
+
+  // Un point par mois (rouge si le solde est négatif) et le nom du mois en dessous.
+  // Sur 24 mois, on n'écrit qu'un mois sur trois pour que ça reste lisible.
+  const pas = lignes.length > 12 ? 3 : 1;
+  lignes.forEach(function (l, i) {
+    svg += '<circle class="g-point' + (l.solde < 0 ? " rouge" : "") + '" cx="' + x(i) +
+      '" cy="' + y(l.solde) + '" r="3.5"/>';
+    if (i % pas === 0) {
+      const nom = new Date(l.mois + "-01T00:00:00").toLocaleDateString("fr-FR", { month: "short" });
+      svg += '<text class="g-texte" x="' + x(i) + '" y="' + (hauteur - 8) +
+        '" text-anchor="middle">' + nom + "</text>";
+    }
+  });
+
+  // Le montant du dernier mois, à côté du dernier point.
+  const dernier = lignes[lignes.length - 1];
+  svg += '<text class="g-valeur" x="' + x(lignes.length - 1) + '" y="' + (y(dernier.solde) - 10) +
+    '" text-anchor="end">' + formaterEuros(dernier.solde) + "</text>";
+
+  svg += "</svg>";
+  document.getElementById("prevision-graphique").innerHTML = svg;
+}
+
 // =========================================================
 // 7. EXPORTER ET IMPORTER UNE COPIE (brique 4)
 // =========================================================
@@ -853,6 +1042,7 @@ champFichier.addEventListener("change", function () {
         mouvements = donnees.mouvements;
         dettes = dettesDuFichier;
         projets = projetsDuFichier;
+        if (donnees.parametres) parametres = donnees.parametres;
         enregistrer();
         toutAfficher();
         message.textContent = "Import réussi : " + mouvements.length + " ligne(s), " +

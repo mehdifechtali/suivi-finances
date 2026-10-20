@@ -441,7 +441,58 @@ td:first-child { font-family: var(--police-texte); }
 .bouton-petit { padding: 9px 14px; font-size: 0.88rem; }
 
 /* =========================================================
-   9. SUR TÉLÉPHONE (écran de moins de 760 pixels)
+   9. PRÉVISION (brique 7)
+   ========================================================= */
+.verdict {
+  margin: 20px 0 0;
+  padding: 14px 18px;
+  border-radius: var(--rayon);
+  border: 1px solid var(--bordure);
+  background: var(--surface);
+  font-weight: 500;
+  max-width: 75ch;
+}
+.verdict.ok { border-color: var(--positif); }
+.verdict.alerte { border-color: var(--negatif); color: var(--negatif); }
+.verdict:empty { display: none; }
+
+.graphique {
+  margin: 20px 0 0;
+  padding: 18px 18px 10px;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+}
+.graphique figcaption {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texte-doux);
+  margin-bottom: 8px;
+}
+.graphique svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* Les éléments du graphique prennent leurs couleurs dans les variables,
+   donc ils s'adaptent tout seuls au mode sombre. */
+.g-grille { stroke: var(--bordure); stroke-width: 1; }
+.g-zero { stroke: var(--texte-doux); stroke-width: 1; stroke-dasharray: 4 4; }
+.g-texte { fill: var(--texte-doux); font: 500 11px var(--police-texte); }
+.g-aire { fill: var(--accent); opacity: 0.12; }
+.g-ligne { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.g-point { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+.g-point.rouge { stroke: var(--negatif); fill: var(--negatif); }
+.g-valeur { fill: var(--texte); font: 600 11px var(--police-chiffres); }
+
+.titre-tableau { margin: 32px 0 12px; }
+.tableau-prevision {
+  max-height: none;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+}
+.tableau-prevision td.negatif, .tableau-prevision td.positif { font-weight: 600; }
+
+/* =========================================================
+   10. SUR TÉLÉPHONE (écran de moins de 760 pixels)
    Le menu passe en barre fixe en bas de l'écran.
    ========================================================= */
 @media (max-width: 760px) {
