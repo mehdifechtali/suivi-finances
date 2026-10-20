@@ -76,6 +76,34 @@
       </div>
       <p class="vide" id="apercu-vide">Les chiffres apparaîtront ici dès que tu auras saisi tes premières recettes et dépenses.</p>
 
+      <!-- Les blocs de synthèse (brique 8). -->
+      <div class="blocs" id="apercu-blocs">
+
+        <article class="bloc">
+          <h2>Où va ton argent ce mois-ci</h2>
+          <ul class="repartition" id="apercu-repartition"></ul>
+          <p class="aide" id="apercu-repartition-vide">Aucune dépense ce mois-ci pour l'instant.</p>
+        </article>
+
+        <article class="bloc">
+          <div class="bloc-titre">
+            <h2>Ta trajectoire</h2>
+            <button class="lien" type="button" data-aller="prevision">Voir le détail</button>
+          </div>
+          <p class="verdict" id="apercu-verdict"></p>
+          <div id="apercu-graphique"></div>
+        </article>
+
+        <article class="bloc" id="apercu-bloc-projets">
+          <div class="bloc-titre">
+            <h2>Tes projets</h2>
+            <button class="lien" type="button" data-aller="projets">Gérer</button>
+          </div>
+          <ul class="mini-projets" id="apercu-projets-liste"></ul>
+        </article>
+
+      </div>
+
       <!-- Copie de sécurité (brique 4). -->
       <div class="sauvegarde">
         <div>

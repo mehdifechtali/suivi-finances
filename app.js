@@ -519,9 +519,83 @@ function afficherApercu() {
   caseSolde.classList.toggle("negatif", solde < 0);
 
   // Le message d'attente disparaît dès qu'il y a une donnée.
-  document.getElementById("apercu-vide").hidden =
-    mouvements.length > 0 || dettes.length > 0 || projets.length > 0;
+  const aDesDonnees = mouvements.length > 0 || dettes.length > 0 || projets.length > 0;
+  document.getElementById("apercu-vide").hidden = aDesDonnees;
+  document.getElementById("apercu-blocs").hidden = !aDesDonnees;
+  if (!aDesDonnees) return;
+
+  // --- Bloc 1 : où va ton argent ce mois-ci (brique 8) ---
+  // On additionne les dépenses du mois par catégorie.
+  const parCategorie = {};
+  mouvements.forEach(function (m) {
+    if (m.type === "depense" && comptePourLeMois(m, mois)) {
+      parCategorie[m.categorie] = (parCategorie[m.categorie] || 0) + m.montant;
+    }
+  });
+  if (mensualites > 0) parCategorie["Remboursements"] = mensualites;
+
+  // On trie de la plus grosse à la plus petite.
+  const categories = Object.keys(parCategorie).sort(function (a, b) {
+    return parCategorie[b] - parCategorie[a];
+  });
+
+  const repartition = document.getElementById("apercu-repartition");
+  repartition.innerHTML = "";
+  categories.forEach(function (nom) {
+    const montant = parCategorie[nom];
+    const part = depenses > 0 ? (montant / depenses) * 100 : 0;
+
+    const li = creer("li");
+    const ligne = creer("div", "repartition-ligne");
+    ligne.append(
+      creer("span", "", nom),
+      creer("span", "", formaterEuros(montant) + " · " + Math.round(part) + " %")
+    );
+    const barre = creer("div", "barre");
+    const remplie = creer("div", "barre-remplie depense");
+    remplie.style.width = part + "%";
+    barre.appendChild(remplie);
+
+    li.append(ligne, barre);
+    repartition.appendChild(li);
+  });
+  document.getElementById("apercu-repartition-vide").hidden = categories.length > 0;
+
+  // --- Bloc 2 : la trajectoire (on réutilise la prévision) ---
+  const lignes = calculerPrevision(parametres.soldeDepart, parametres.horizon);
+  ecrireVerdict(lignes, "apercu-verdict");
+  dessinerGraphique(lignes, "apercu-graphique");
+
+  // --- Bloc 3 : les projets ---
+  document.getElementById("apercu-bloc-projets").hidden = projets.length === 0;
+  const listeProjets = document.getElementById("apercu-projets-liste");
+  listeProjets.innerHTML = "";
+  projets.forEach(function (projet) {
+    const calcul = calculerProjet(projet);
+    const part = calcul.objectifEpargne > 0 ? (projet.epargne / calcul.objectifEpargne) * 100 : 100;
+
+    const li = creer("li");
+    const ligne = creer("div", "repartition-ligne");
+    ligne.append(
+      creer("span", "", projet.libelle + " · " + formaterMois(projet.date)),
+      creer("span", "", Math.round(Math.min(100, part)) + " %")
+    );
+    const barre = creer("div", "barre");
+    const remplie = creer("div", "barre-remplie accent");
+    remplie.style.width = Math.max(0, Math.min(100, part)) + "%";
+    barre.appendChild(remplie);
+
+    li.append(ligne, barre);
+    listeProjets.appendChild(li);
+  });
 }
+
+// Les boutons "Voir le détail" et "Gérer" de l'Aperçu ouvrent l'onglet indiqué.
+document.querySelectorAll("[data-aller]").forEach(function (bouton) {
+  bouton.addEventListener("click", function () {
+    afficherPage(bouton.dataset.aller);
+  });
+});
 
 function toutAfficher() {
   afficherListe("recette");
@@ -867,6 +941,7 @@ formulairePrevision.addEventListener("input", function () {
   parametres.horizon = Number(formulairePrevision.elements.horizon.value) || 12;
   enregistrer();
   afficherPrevision();
+  afficherApercu(); // l'Aperçu affiche aussi la trajectoire
 });
 formulairePrevision.addEventListener("submit", function (e) { e.preventDefault(); });
 
@@ -882,20 +957,7 @@ function afficherPrevision() {
   const lignes = calculerPrevision(parametres.soldeDepart, parametres.horizon);
 
   // --- Le verdict ---
-  const verdict = document.getElementById("prevision-verdict");
-  const premierRouge = lignes.find(function (l) { return l.solde < 0; });
-  const derniere = lignes[lignes.length - 1];
-  if (premierRouge) {
-    verdict.className = "verdict alerte";
-    verdict.textContent =
-      "Attention : en " + formaterMois(premierRouge.mois) + ", ton solde passe à " +
-      formaterEuros(premierRouge.solde) + ". Réduis une dépense ou décale un projet avant ce mois-là.";
-  } else {
-    verdict.className = "verdict ok";
-    verdict.textContent =
-      "Aucun mois dans le rouge sur les " + lignes.length + " prochains mois. Solde prévu fin " +
-      formaterMois(derniere.mois) + " : " + formaterEuros(derniere.solde) + ".";
-  }
+  ecrireVerdict(lignes, "prevision-verdict");
 
   // --- Le tableau ---
   const corps = document.getElementById("prevision-tableau");
@@ -915,12 +977,31 @@ function afficherPrevision() {
   });
 
   // --- Le graphique ---
-  dessinerGraphique(lignes);
+  dessinerGraphique(lignes, "prevision-graphique");
 }
 
 // Dessine une courbe en SVG (le format de dessin du web).
 // Le principe : on transforme chaque montant en position (x, y) sur le dessin.
-function dessinerGraphique(lignes) {
+// Écrit le verdict de la prévision ("tout va bien" ou "alerte") à l'endroit voulu.
+function ecrireVerdict(lignes, idCible) {
+  const verdict = document.getElementById(idCible);
+  const premierRouge = lignes.find(function (l) { return l.solde < 0; });
+  const derniere = lignes[lignes.length - 1];
+  if (premierRouge) {
+    verdict.className = "verdict alerte";
+    verdict.textContent =
+      "Attention : en " + formaterMois(premierRouge.mois) + ", ton solde passe à " +
+      formaterEuros(premierRouge.solde) + ". Réduis une dépense ou décale un projet avant ce mois-là.";
+  } else {
+    verdict.className = "verdict ok";
+    verdict.textContent =
+      "Aucun mois dans le rouge sur les " + lignes.length + " prochains mois. Solde prévu fin " +
+      formaterMois(derniere.mois) + " : " + formaterEuros(derniere.solde) + ".";
+  }
+}
+
+// idCible : l'endroit de la page où dessiner (la page Prévision ou l'Aperçu).
+function dessinerGraphique(lignes, idCible) {
   const largeur = 640, hauteur = 240;
   const marge = { haut: 24, droite: 16, bas: 28, gauche: 64 };
   const zoneL = largeur - marge.gauche - marge.droite;
@@ -984,7 +1065,7 @@ function dessinerGraphique(lignes) {
     '" text-anchor="end">' + formaterEuros(dernier.solde) + "</text>";
 
   svg += "</svg>";
-  document.getElementById("prevision-graphique").innerHTML = svg;
+  document.getElementById(idCible).innerHTML = svg;
 }
 
 // =========================================================

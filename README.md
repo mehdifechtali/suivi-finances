@@ -13,4 +13,4 @@ Construite en HTML, CSS et JavaScript, sans framework, et publiée avec GitHub P
 - [x] Brique 5 : dettes
 - [x] Brique 6 : projets
 - [x] Brique 7 : prévision
-- [ ] Brique 8 : page d'aperçu
+- [x] Brique 8 : page d'aperçu
