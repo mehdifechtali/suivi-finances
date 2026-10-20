@@ -333,7 +333,86 @@ input:focus, select:focus {
 .sauvegarde-message:empty { display: none; }
 
 /* =========================================================
-   7. SUR TÉLÉPHONE (écran de moins de 760 pixels)
+   7. DETTES (brique 5)
+   ========================================================= */
+.tuile-note { margin: 6px 0 0; font-size: 0.8rem; color: var(--texte-doux); }
+.tuile-note:empty { display: none; }
+
+.aide { margin: 10px 0 0; font-size: 0.88rem; color: var(--texte-doux); max-width: 65ch; }
+.erreur { margin: 10px 0 0; font-size: 0.9rem; color: var(--negatif); font-weight: 600; }
+.erreur:empty { display: none; }
+
+.dettes { display: grid; gap: 14px; }
+
+.dette {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 18px 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.dette-haut {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.dette-titre { margin: 0; font-weight: 600; font-size: 1.05rem; overflow-wrap: anywhere; }
+.dette-sous-titre { margin: 2px 0 0; font-size: 0.85rem; color: var(--texte-doux); }
+
+/* La barre de progression du remboursement. */
+.barre {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--fond);
+  overflow: hidden;
+}
+.barre-remplie {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--positif);
+}
+
+/* Les 4 chiffres clés de la dette. */
+.dette-chiffres {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.dette-chiffres div { min-width: 0; }
+.dette-chiffres dt { font-size: 0.78rem; color: var(--texte-doux); }
+.dette-chiffres dd {
+  margin: 2px 0 0;
+  font-family: var(--police-chiffres);
+  font-variant-numeric: tabular-nums;
+}
+
+/* L'échéancier dépliable. */
+details summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.tableau-conteneur { overflow-x: auto; margin-top: 10px; max-height: 320px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th, td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--bordure); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  color: var(--texte-doux);
+  font-weight: 600;
+}
+td { font-family: var(--police-chiffres); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--police-texte); }
+
+/* =========================================================
+   8. SUR TÉLÉPHONE (écran de moins de 760 pixels)
    Le menu passe en barre fixe en bas de l'écran.
    ========================================================= */
 @media (max-width: 760px) {

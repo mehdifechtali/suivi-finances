@@ -62,10 +62,11 @@
         <article class="tuile">
           <p class="etiquette">Dépenses du mois</p>
           <p class="montant negatif" id="apercu-depenses">0,00 €</p>
+          <p class="tuile-note" id="apercu-depenses-note"></p>
         </article>
         <article class="tuile">
           <p class="etiquette">Reste à rembourser</p>
-          <p class="montant">— €</p>
+          <p class="montant" id="apercu-dettes">0,00 €</p>
         </article>
       </div>
       <p class="vide" id="apercu-vide">Les chiffres apparaîtront ici dès que tu auras saisi tes premières recettes et dépenses.</p>
@@ -177,9 +178,42 @@
       <ul class="liste" id="liste-depense"></ul>
     </section>
 
+    <!-- ===== DETTES (brique 5) ===== -->
     <section id="dettes" class="page" hidden>
       <header class="entete"><p class="sur-titre">Ce qui reste dû</p><h1>Dettes</h1></header>
-      <p class="vide">Crédits et remboursements en cours. On construit cette page à la brique 5.</p>
+
+      <form class="formulaire" id="formulaire-dette">
+        <div class="champ">
+          <label for="dette-libelle">Libellé</label>
+          <input id="dette-libelle" name="libelle" type="text" placeholder="Ex. Prêt étudiant" required>
+        </div>
+        <div class="champ">
+          <label for="dette-restant">Capital restant dû (€)</label>
+          <input id="dette-restant" name="restant" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+        </div>
+        <div class="champ">
+          <label for="dette-mensualite">Mensualité (€)</label>
+          <input id="dette-mensualite" name="mensualite" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+        </div>
+        <div class="champ">
+          <label for="dette-taux">Taux annuel (%)</label>
+          <input id="dette-taux" name="taux" type="number" min="0" step="0.01" placeholder="0 si sans intérêts" value="0">
+        </div>
+        <div class="champ">
+          <label for="dette-debut">Prochaine mensualité</label>
+          <input id="dette-debut" name="debut" type="date" required>
+        </div>
+        <button class="bouton" type="submit">Ajouter la dette</button>
+      </form>
+      <p class="aide">Les mensualités sont ajoutées automatiquement à tes dépenses de chaque mois. Ne les saisis pas une deuxième fois dans Dépenses.</p>
+      <p class="erreur" id="dette-erreur" role="alert"></p>
+
+      <div class="liste-titre">
+        <h2>Mes dettes</h2>
+        <p class="total" id="total-dettes">0,00 €</p>
+      </div>
+      <!-- Les cartes de dettes, remplies par le JavaScript. -->
+      <div class="dettes" id="liste-dettes"></div>
     </section>
 
     <section id="projets" class="page" hidden>

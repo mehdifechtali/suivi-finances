@@ -10,7 +10,7 @@ Construite en HTML, CSS et JavaScript, sans framework, et publiée avec GitHub P
 - [x] Brique 2 : design et navigation
 - [x] Brique 3 : recettes et dépenses
 - [x] Brique 4 : sauvegarde des données
-- [ ] Brique 5 : dettes
+- [x] Brique 5 : dettes
 - [ ] Brique 6 : projets
 - [ ] Brique 7 : prévision
 - [ ] Brique 8 : page d'aperçu
