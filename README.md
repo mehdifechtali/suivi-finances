@@ -14,3 +14,4 @@ Construite en HTML, CSS et JavaScript, sans framework, et publiée avec GitHub P
 - [x] Brique 6 : projets
 - [x] Brique 7 : prévision
 - [x] Brique 8 : page d'aperçu
+- [x] Bonus : icône et installation sur iPhone
