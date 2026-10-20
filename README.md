@@ -7,7 +7,7 @@ Construite en HTML, CSS et JavaScript, sans framework, et publiée avec GitHub P
 ## Avancement
 
 - [x] Brique 1 : fondations et mise en ligne
-- [ ] Brique 2 : design et navigation
+- [x] Brique 2 : design et navigation
 - [ ] Brique 3 : recettes et dépenses
 - [ ] Brique 4 : sauvegarde des données
 - [ ] Brique 5 : dettes

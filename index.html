@@ -1,18 +1,105 @@
 <!DOCTYPE html>
-<!-- La ligne au-dessus dit au navigateur : "ceci est une page HTML moderne". -->
 <html lang="fr">
 <head>
-  <!-- Le <head> contient les réglages de la page, invisibles à l'écran. -->
   <meta charset="UTF-8">
-  <!-- Pour que la page s'adapte à la largeur d'un téléphone. -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Le nom affiché dans l'onglet du navigateur. -->
   <title>Suivi Finances</title>
+
+  <!-- Les polices d'écriture, chargées depuis Google Fonts. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+  <!-- Le fichier qui contient tout le style (couleurs, tailles, mise en page). -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Le <body> contient tout ce qu'on voit à l'écran. -->
-  <h1>Suivi Finances</h1>
-  <p>Mon tableau de bord : recettes, dépenses, dettes, projets et prévisions.</p>
-  <p>Brique 1 terminée : la page est en ligne.</p>
+
+  <!-- ===== MENU DE NAVIGATION ===== -->
+  <!-- Sur ordinateur il est à gauche, sur téléphone il passe en bas de l'écran. -->
+  <nav class="menu">
+    <div class="logo">Suivi<span>Finances</span></div>
+
+    <!-- Chaque bouton a un "data-page" qui dit quelle section il ouvre. -->
+    <button class="onglet actif" data-page="apercu">
+      <span class="icone">◐</span><span class="libelle">Aperçu</span>
+    </button>
+    <button class="onglet" data-page="recettes">
+      <span class="icone">↗</span><span class="libelle">Recettes</span>
+    </button>
+    <button class="onglet" data-page="depenses">
+      <span class="icone">↘</span><span class="libelle">Dépenses</span>
+    </button>
+    <button class="onglet" data-page="dettes">
+      <span class="icone">⧗</span><span class="libelle">Dettes</span>
+    </button>
+    <button class="onglet" data-page="projets">
+      <span class="icone">◎</span><span class="libelle">Projets</span>
+    </button>
+    <button class="onglet" data-page="prevision">
+      <span class="icone">⟿</span><span class="libelle">Prévision</span>
+    </button>
+  </nav>
+
+  <!-- ===== CONTENU ===== -->
+  <!-- Une <section> par page. Une seule est visible à la fois. -->
+  <main>
+
+    <section id="apercu" class="page">
+      <header class="entete">
+        <p class="sur-titre">Octobre 2026</p>
+        <h1>Aperçu</h1>
+      </header>
+      <div class="grille">
+        <article class="tuile">
+          <p class="etiquette">Solde du mois</p>
+          <p class="montant">— €</p>
+        </article>
+        <article class="tuile">
+          <p class="etiquette">Recettes</p>
+          <p class="montant positif">— €</p>
+        </article>
+        <article class="tuile">
+          <p class="etiquette">Dépenses</p>
+          <p class="montant negatif">— €</p>
+        </article>
+        <article class="tuile">
+          <p class="etiquette">Reste à rembourser</p>
+          <p class="montant">— €</p>
+        </article>
+      </div>
+      <p class="vide">Les chiffres apparaîtront ici dès que tu auras saisi tes premières recettes et dépenses.</p>
+    </section>
+
+    <section id="recettes" class="page" hidden>
+      <header class="entete"><p class="sur-titre">Ce qui rentre</p><h1>Recettes</h1></header>
+      <p class="vide">Salaire, factures, autres revenus. On construit cette page à la brique 3.</p>
+    </section>
+
+    <section id="depenses" class="page" hidden>
+      <header class="entete"><p class="sur-titre">Ce qui sort</p><h1>Dépenses</h1></header>
+      <p class="vide">Loyer, courses, abonnements… On construit cette page à la brique 3.</p>
+    </section>
+
+    <section id="dettes" class="page" hidden>
+      <header class="entete"><p class="sur-titre">Ce qui reste dû</p><h1>Dettes</h1></header>
+      <p class="vide">Crédits et remboursements en cours. On construit cette page à la brique 5.</p>
+    </section>
+
+    <section id="projets" class="page" hidden>
+      <header class="entete"><p class="sur-titre">Ce que je prépare</p><h1>Projets</h1></header>
+      <p class="vide">Achats et financements à venir. On construit cette page à la brique 6.</p>
+    </section>
+
+    <section id="prevision" class="page" hidden>
+      <header class="entete"><p class="sur-titre">Les 12 prochains mois</p><h1>Prévision</h1></header>
+      <p class="vide">L'évolution de ton solde mois par mois. On construit cette page à la brique 7.</p>
+    </section>
+
+  </main>
+
+  <!-- Le fichier qui contient le comportement (les clics, les calculs). -->
+  <!-- On le met tout en bas pour que la page soit déjà chargée quand il s'exécute. -->
+  <script src="app.js"></script>
 </body>
 </html>

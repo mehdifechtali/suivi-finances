@@ -1,0 +1,202 @@
+/* =========================================================
+   1. LES VARIABLES (on les appelle "tokens")
+   On définit chaque couleur et police une seule fois ici.
+   Ensuite on les réutilise partout avec var(--nom).
+   Pour changer une couleur dans toute l'app, on la change ici.
+   ========================================================= */
+:root {
+  --fond: #F3F5F7;          /* fond de la page */
+  --surface: #FFFFFF;       /* fond des cartes */
+  --texte: #14202B;         /* texte principal */
+  --texte-doux: #5C6B78;    /* texte secondaire */
+  --bordure: #DDE3E8;       /* traits fins */
+  --accent: #2950D6;        /* couleur de l'app (bleu cobalt) */
+  --accent-doux: #E6ECFC;   /* accent très clair, pour l'onglet actif */
+  --positif: #127A4E;       /* argent qui rentre */
+  --negatif: #C0392B;       /* argent qui sort */
+
+  --police-titre: "Bricolage Grotesque", system-ui, sans-serif;
+  --police-texte: "Figtree", system-ui, sans-serif;
+  --police-chiffres: "JetBrains Mono", ui-monospace, monospace;
+
+  --rayon: 14px;            /* arrondi des coins */
+}
+
+/* Mode sombre : si le téléphone ou l'ordinateur est réglé en sombre,
+   on remplace simplement les valeurs des variables. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #0E141A;
+    --surface: #17202A;
+    --texte: #E8EDF1;
+    --texte-doux: #93A1AD;
+    --bordure: #26323D;
+    --accent: #7D9BFF;
+    --accent-doux: #1C2846;
+    --positif: #4CC38A;
+    --negatif: #FF7A6B;
+    color-scheme: dark;
+  }
+}
+
+/* =========================================================
+   2. LA BASE
+   ========================================================= */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--police-texte);
+  font-size: 16px;
+  line-height: 1.5;
+  /* Grille : une colonne pour le menu, une pour le contenu. */
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+h1 {
+  font-family: var(--police-titre);
+  font-size: 2.25rem;
+  line-height: 1.1;
+  margin: 0;
+}
+
+[hidden] { display: none !important; }
+
+/* =========================================================
+   3. LE MENU
+   ========================================================= */
+.menu {
+  background: var(--surface);
+  border-right: 1px solid var(--bordure);
+  padding: 24px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.logo {
+  font-family: var(--police-titre);
+  font-weight: 700;
+  font-size: 1.25rem;
+  padding: 0 12px 20px;
+}
+.logo span { color: var(--accent); }
+
+.onglet {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--texte-doux);
+  font: 500 0.95rem var(--police-texte);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.onglet:hover { background: var(--fond); color: var(--texte); }
+.onglet:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* L'onglet de la page affichée. */
+.onglet.actif {
+  background: var(--accent-doux);
+  color: var(--accent);
+  font-weight: 600;
+}
+.icone { width: 20px; text-align: center; font-size: 1.1rem; }
+
+/* =========================================================
+   4. LE CONTENU
+   ========================================================= */
+main {
+  padding: 40px 48px;
+  max-width: 1100px;
+  width: 100%;
+}
+
+.entete { margin-bottom: 28px; }
+.sur-titre {
+  margin: 0 0 4px;
+  color: var(--texte-doux);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Les tuiles de chiffres : autant de colonnes que la place le permet. */
+.grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.tuile {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 20px;
+}
+.etiquette { margin: 0 0 8px; color: var(--texte-doux); font-size: 0.9rem; }
+.montant {
+  margin: 0;
+  font-family: var(--police-chiffres);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums; /* chiffres alignés */
+}
+.positif { color: var(--positif); }
+.negatif { color: var(--negatif); }
+
+.vide {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px dashed var(--bordure);
+  border-radius: var(--rayon);
+  color: var(--texte-doux);
+  max-width: 65ch;
+}
+
+/* =========================================================
+   5. SUR TÉLÉPHONE (écran de moins de 760 pixels)
+   Le menu passe en barre fixe en bas de l'écran.
+   ========================================================= */
+@media (max-width: 760px) {
+  body { grid-template-columns: 1fr; }
+
+  .menu {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    z-index: 10;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-right: 0;
+    border-top: 1px solid var(--bordure);
+  }
+  .logo { display: none; }
+
+  .onglet {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 2px;
+    font-size: 0.68rem;
+    text-align: center;
+  }
+
+  main { padding: 24px 16px 96px; }
+  h1 { font-size: 1.8rem; }
+}
